@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Open site (docker compose up first)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8000"
+    },
+    {
+      "name": "Open admin panel",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8000/admin.php"
+    }
+  ]
+}

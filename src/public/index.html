@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoLocal Wheels – Bike Rentals in Pondicherry & Beyond</title>
+<meta name="description" content="Find, compare and book bikes from local rental shops in Pondicherry, Chennai, Bengaluru and Goa on one live map.">
+<link rel="icon" href="logo-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --ink:#14100c; --orange:#d2461f; --muted:#667085; --line:#e6e1d6; --bg:#fbf8f1; --card:#fff;
+    --mustard:#e8a21e; --mustard-d:#c9871a; --brown:#7a4a1e; --green:#2e9e6a; --red:#d9534f; --blue:#2f80ed;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Outfit,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+  button,input,select{font:inherit}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;background:var(--ink);color:#fff;flex-wrap:wrap;border-bottom:3px solid var(--orange)}
+  .logo{font-weight:800;font-size:24px;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+  .logo img{height:42px;width:auto}
+  .logo .go{color:var(--orange)} .logo .wh{color:var(--mustard)}
+  .nav{display:flex;gap:8px;flex-wrap:wrap}
+  .nav button{background:transparent;border:1px solid #ffffff33;color:#fff;padding:8px 14px;border-radius:999px;cursor:pointer}
+  .nav button:hover{background:#ffffff14}
+  .nav .cta{background:var(--mustard);border-color:var(--mustard);color:var(--ink);font-weight:600}
+  .demo{background:#fff4d6;color:#7a5600;font-size:13px;text-align:center;padding:6px 12px;border-bottom:1px solid #f0dca0}
+  .hero{padding:24px 24px 6px;max-width:1400px;margin:0 auto}
+  .hero h1{margin:0 0 4px;font-size:clamp(26px,3.4vw,40px);letter-spacing:-1px;line-height:1.1;color:var(--orange)}
+  .hero p{margin:0;color:var(--muted)}
+  .controls{max-width:1400px;margin:14px auto 0;padding:0 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .controls select,.controls input[type=search]{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .controls input[type=search]{flex:1;min-width:200px}
+  .near{background:var(--ink);color:#fff;border:none;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:999px;cursor:pointer;font-size:14px}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .price{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:12px}
+  main{max-width:1400px;margin:16px auto 40px;padding:0 24px;display:grid;grid-template-columns:1.25fr 1fr;gap:20px}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  .mapwrap{position:sticky;top:12px;height:660px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:#eee}
+  @media (max-width:900px){.mapwrap{position:relative;height:440px}}
+  #map{width:100%;height:100%}
+  .mapbar{position:absolute;top:10px;left:56px;z-index:500;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 70px)}
+  .mapbar label{background:#fffffff0;border:1px solid var(--line);padding:6px 10px;border-radius:10px;font-size:13px;display:flex;gap:6px;align-items:center;cursor:pointer;box-shadow:0 2px 6px #0001}
+  .listhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+  .listhead h2{margin:0;font-size:20px}
+  .listhead select{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .list{display:flex;flex-direction:column;gap:12px}
+  .shop{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;grid-template-columns:56px 1fr auto;gap:14px;cursor:pointer;transition:.15s}
+  .shop:hover,.shop.hl{border-color:var(--mustard);box-shadow:0 6px 20px #e8a21e33}
+  .avatar{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:28px}
+  .shop h3{margin:0 0 2px;font-size:17px}
+  .meta{font-size:13px;color:var(--muted)}
+  .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:12px;background:var(--bg);border:1px solid var(--line);padding:2px 8px;border-radius:999px}
+  .tag.dist{background:#e8f0fe;border-color:#c8dafc;color:#1a56b8}
+  .from{text-align:right}
+  .from b{font-size:20px;display:block}
+  .from small{color:var(--muted)}
+  .open{color:var(--green);font-weight:600}.closed{color:var(--red);font-weight:600}
+  .empty{padding:40px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:16px}
+  .info{max-width:1400px;margin:0 auto 50px;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .info div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+  .info h3{margin:0 0 6px}
+  .info ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;line-height:1.6}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:20px;border-top:1px solid var(--line)}
+  /* map markers */
+  .pin{background:var(--mustard);color:var(--ink);font-weight:700;font-size:12px;padding:4px 8px;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px #0004;white-space:nowrap;position:relative;display:inline-block;transform:translate(-50%,-100%)}
+  .pin:after{content:'';position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:var(--mustard);border-bottom:0}
+  .pin.sel{background:var(--orange);color:#fff;z-index:1000}
+  .pin.sel:after{border-top-color:var(--orange)}
+  .leaflet-div-icon{background:none;border:none}
+  .leaflet-popup-content{font-family:Outfit,system-ui,sans-serif;margin:12px 14px}
+  .pop h4{margin:0 0 2px;font-size:15px}
+  .pop .btn{margin-top:8px}
+  .me{width:18px;height:18px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 6px #2f80ed44}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:#14100c99;display:none;align-items:center;justify-content:center;padding:16px;z-index:2000}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:20px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:22px;position:relative}
+  .modal h2{margin:0 0 4px}
+  .x{position:absolute;top:14px;right:14px;border:none;background:var(--bg);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500}
+  .btn{background:var(--mustard);border:none;padding:10px 16px;border-radius:12px;font-weight:600;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-block}
+  .btn:hover{background:var(--mustard-d)}
+  .btn.ghost{background:var(--bg);border:1px solid var(--line)}
+  .btn.dark{background:var(--ink);color:#fff}
+  .btn.sm{padding:6px 12px;font-size:13px}
+  .row2{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  form label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  form input,form select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .total{background:var(--bg);border-radius:12px;padding:12px;margin:14px 0;display:flex;justify-content:space-between;font-size:15px}
+  .total b{font-size:20px}
+  .ok{background:#e8f7ef;border:1px solid #b9e6cd;color:#1d6b45;padding:14px;border-radius:12px;margin-top:10px}
+  .warn{background:#fff4d6;border:1px solid #f0dca0;color:#7a5600;padding:12px;border-radius:12px;margin-top:10px;font-size:14px}
+  .bk{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;font-size:14px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:3000;display:none;max-width:90vw;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><img src="logo-icon.png" alt="GoLocal Wheels logo"> <span class="go">GoLocal</span><span class="wh">Wheels</span></div>
+  <div class="nav">
+    <button onclick="openBookings()">My bookings <span id="bkCount"></span></button>
+    <button onclick="openRoutes()">Ride routes</button>
+    <button class="cta" onclick="openRegister()">+ List your shop</button>
+  </div>
+</header>
+<div class="demo" id="demoBar">Preview version: shop names, phone numbers, prices and ratings are sample data. Real local shops are coming soon.</div>
+
+<section class="hero">
+  <h1 id="heroTitle">Rent a bike in Puducherry</h1>
+  <p id="heroSub">Compare local rental shops, prices and bikes on one live map.</p>
+</section>
+
+<div class="controls">
+  <select id="city" aria-label="City"></select>
+  <button class="near" onclick="nearMe()">📍 Near me</button>
+  <input type="search" id="q" placeholder="Search shop, area or bike model (e.g. Activa, Classic 350)…">
+  <div class="chips" id="types"></div>
+  <div class="price">Max ₹/day <input type="range" id="maxp" min="100" max="2000" step="50" value="2000"><b id="maxpv">2000</b></div>
+</div>
+
+<main>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="mapbar">
+      <label><input type="checkbox" id="tRoutes" checked> Ride routes</label>
+      <label><input type="checkbox" id="tFuel"> Petrol & EV</label>
+      <label><input type="checkbox" id="tOpen"> Open now</label>
+    </div>
+  </div>
+  <section>
+    <div class="listhead">
+      <h2 id="count">Shops</h2>
+      <select id="sort" aria-label="Sort">
+        <option value="price">Cheapest first</option>
+        <option value="rating">Top rated</option>
+        <option value="bikes">Most bikes</option>
+        <option value="dist">Nearest first</option>
+      </select>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+
+<section class="info" id="tips"></section>
+<footer>© <span id="yr"></span> GoLocal Wheels · Map data © OpenStreetMap contributors</footer>
+
+<div class="overlay" id="ov" onclick="if(event.target===this)closeM()"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script>
+/* ---------------- SETUP ---------------- */
+const TYPES=[{k:'Scooter',e:'🛵'},{k:'Geared',e:'🏍️'},{k:'Royal Enfield',e:'🔥'},{k:'Electric',e:'⚡'},{k:'Cycle',e:'🚲'}];
+const EMO=Object.fromEntries(TYPES.map(t=>[t.k,t.e]));
+const COLORS=['#fde7b0','#f6d2c4','#efe0cc','#e1e9d4','#f3e3b5'];
+let bookings=[];
+const st={city:'pondy',q:'',types:new Set(),maxp:2000,sort:'price',sel:null,me:null};
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rupee=n=>'₹'+Number(n).toLocaleString('en-IN');
+const minPrice=s=>Math.min(...s.bikes.map(b=>b.day));
+const digits=p=>String(p||'').replace(/\D/g,'');
+function toast(t){const el=$('#toast');el.textContent=t;el.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display='none',3500);}
+function isOpen(s){const n=new Date(),m=n.getHours()*60+n.getMinutes();const t=x=>{const[h,mm]=x.split(':').map(Number);return h*60+mm};return m>=t(s.open)&&m<t(s.close);}
+function km(a,b,c,d){const R=6371,r=x=>x*Math.PI/180;const dl=r(c-a),dn=r(d-b);const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+const dist=s=>st.me?km(st.me[0],st.me[1],s.lat,s.lng):null;
+const dirUrl=s=>`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`;
+let isSample=SAMPLE_DATA;
+$('#yr').textContent=new Date().getFullYear();
+
+/* ---------------- MAP ---------------- */
+const map=L.map('map',{zoomControl:true}).setView(CITIES.pondy.center,CITIES.pondy.zoom);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+const shopLayer=L.layerGroup().addTo(map), routeLayer=L.layerGroup().addTo(map), fuelLayer=L.layerGroup(), meLayer=L.layerGroup().addTo(map);
+const markers={};
+
+function popupHtml(s){const op=isOpen(s);const d=dist(s);
+  return `<div class="pop"><h4>${esc(s.name)}</h4><div class="meta">📍 ${esc(s.area)} · ⭐ ${s.rating||'New'} · <span class="${op?'open':'closed'}">${op?'Open':'Closed'}</span>${d!=null?' · '+d.toFixed(1)+' km':''}</div>
+  <div class="meta">From <b>${rupee(minPrice(s))}</b>/day · ${s.bikes.length} bike${s.bikes.length>1?'s':''}</div>
+  <button class="btn sm" onclick="openShop(${s.id})">View & book</button> <a class="btn sm ghost" href="${dirUrl(s)}" target="_blank" rel="noopener">Directions</a></div>`;}
+
+function renderMap(){
+  shopLayer.clearLayers();routeLayer.clearLayers();fuelLayer.clearLayers();
+  for(const k in markers)delete markers[k];
+  const c=CITIES[st.city];
+  c.routes.forEach(r=>L.polyline(r.pts,{color:r.color,weight:5,opacity:.85,dashArray:'10 8'}).bindTooltip(`${r.name} · ${r.km} km`,{sticky:true}).addTo(routeLayer));
+  if($('#tRoutes').checked)map.addLayer(routeLayer);else map.removeLayer(routeLayer);
+  c.fuel.forEach(([t,n,la,ln])=>L.circleMarker([la,ln],{radius:7,color:'#fff',weight:2,fillColor:t==='ev'?'#2e9e6a':'#d9534f',fillOpacity:1}).bindTooltip((t==='ev'?'⚡ ':'⛽ ')+n).addTo(fuelLayer));
+  if($('#tFuel').checked)map.addLayer(fuelLayer);else map.removeLayer(fuelLayer);
+  filtered().forEach(s=>{
+    const icon=L.divIcon({className:'',html:`<div class="pin ${st.sel===s.id?'sel':''}">${EMO[s.bikes[0].type]} ${rupee(minPrice(s))}</div>`,iconSize:[0,0]});
+    const m=L.marker([s.lat,s.lng],{icon,zIndexOffset:st.sel===s.id?1000:0}).bindPopup(()=>popupHtml(s));
+    m.on('click',()=>{st.sel=s.id;renderList();highlightCard();});
+    m.addTo(shopLayer);markers[s.id]=m;
+  });
+}
+function highlightCard(){document.querySelectorAll('.shop').forEach(e=>e.classList.toggle('hl',+e.dataset.id===st.sel));
+  const el=document.querySelector(`.shop[data-id="${st.sel}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+/* ---------------- FILTER + LIST ---------------- */
+function filtered(){
+  const q=st.q.trim().toLowerCase();
+  let r=SHOPS.filter(s=>s.city===st.city)
+    .filter(s=>!q||(s.name+' '+s.area+' '+s.bikes.map(b=>b.model+' '+b.type).join(' ')).toLowerCase().includes(q))
+    .filter(s=>s.bikes.some(b=>b.day<=st.maxp&&(!st.types.size||st.types.has(b.type))))
+    .filter(s=>!$('#tOpen').checked||isOpen(s));
+  const by={price:(a,b)=>minPrice(a)-minPrice(b),rating:(a,b)=>(b.rating||0)-(a.rating||0),bikes:(a,b)=>b.bikes.length-a.bikes.length,dist:(a,b)=>(dist(a)??1e9)-(dist(b)??1e9)};
+  return r.sort(by[st.sort]);
+}
+function renderList(){
+  const list=filtered(),c=CITIES[st.city];
+  $('#count').textContent=`${list.length} shop${list.length===1?'':'s'} in ${c.name}`;
+  $('#list').innerHTML=list.length?list.map(s=>{
+    const types=[...new Set(s.bikes.map(b=>b.type))],op=isOpen(s),d=dist(s);
+    return `<div class="shop ${st.sel===s.id?'hl':''}" data-id="${s.id}">
+      <div class="avatar" style="background:${COLORS[s.id%COLORS.length]}">${EMO[types[0]]}</div>
+      <div><h3>${esc(s.name)}</h3>
+        <div class="meta">📍 ${esc(s.area)} · ⭐ ${s.rating||'New'} · <span class="${op?'open':'closed'}">${op?'Open':'Closed'}</span> ${s.open}–${s.close}</div>
+        <div class="tags">${d!=null?`<span class="tag dist">${d.toFixed(1)} km away</span>`:''}${types.map(t=>`<span class="tag">${EMO[t]} ${t}</span>`).join('')}<span class="tag">${s.bikes.length} bikes</span></div></div>
+      <div class="from"><small>from</small><b>${rupee(minPrice(s))}</b><small>/day</small><br><button class="btn sm" style="margin-top:8px" data-book="${s.id}">Book</button></div>
+    </div>`}).join(''):`<div class="empty">No shops match these filters.<br><button class="btn ghost sm" style="margin-top:10px" onclick="clearFilters()">Clear filters</button></div>`;
+  $('#list').querySelectorAll('.shop').forEach(el=>el.onclick=e=>{const id=+el.dataset.id;const b=e.target.closest('[data-book]');
+    if(b){e.stopPropagation();openBook(id);return;}focusShop(id);});
+}
+function focusShop(id){const s=SHOPS.find(x=>x.id===id);st.sel=id;renderMap();highlightCard();
+  map.flyTo([s.lat,s.lng],Math.max(map.getZoom(),15),{duration:.6});
+  setTimeout(()=>markers[id]&&markers[id].openPopup(),650);
+  if(window.innerWidth<900)document.querySelector('.mapwrap').scrollIntoView({behavior:'smooth'});}
+function render(){renderMap();renderList();}
+function clearFilters(){st.q='';$('#q').value='';st.types.clear();st.maxp=2000;$('#maxp').value=2000;$('#maxpv').textContent=2000;$('#tOpen').checked=false;renderChips();render();}
+
+/* ---------------- NEAR ME ---------------- */
+function nearMe(){
+  if(!window.isSecureContext||!navigator.geolocation){toast('“Near me” needs a secure (https) website. It will start working once SSL is active.');return;}
+  toast('Finding your location…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    st.me=[p.coords.latitude,p.coords.longitude];
+    let best=null,bd=1e9;for(const k in CITIES){const d=km(st.me[0],st.me[1],...CITIES[k].center);if(d<bd){bd=d;best=k;}}
+    if(bd<80&&best!==st.city){st.city=best;$('#city').value=best;onCity(false);}
+    meLayer.clearLayers();L.marker(st.me,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).bindTooltip('You are here').addTo(meLayer);
+    st.sort='dist';$('#sort').value='dist';render();
+    if(bd<80)map.flyTo(st.me,14);else toast('No GoLocal Wheels city near you yet. Showing distances anyway.');
+  },()=>toast('Could not get your location. Please allow location access.'),{enableHighAccuracy:true,timeout:10000});
+}
+
+/* ---------------- TIPS ---------------- */
+function renderTips(){const c=CITIES[st.city];
+  $('#tips').innerHTML=c.tips.map(([t,d])=>`<div><h3>${esc(t)}</h3><ul><li>${esc(d)}</li></ul></div>`).join('')+
+  `<div><h3>Ride routes in ${esc(c.name)}</h3><ul>${c.routes.map(r=>`<li><b style="color:${r.color}">●</b> ${esc(r.name)} (${r.km} km)</li>`).join('')}</ul></div>`;}
+
+/* ---------------- MODALS ---------------- */
+function showM(h){$('#modal').innerHTML='<button class="x" onclick="closeM()" aria-label="Close">×</button>'+h;$('#ov').classList.add('show');}
+function closeM(){$('#ov').classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+
+function openShop(id){const s=SHOPS.find(x=>x.id===id),c=CITIES[s.city];map.closePopup();
+  const wa=digits(s.whatsapp||s.phone),d=dist(s);
+  showM(`<h2>${esc(s.name)}</h2><div class="meta">📍 ${esc(s.area)}, ${esc(c.name)}${c.state!==c.name?', '+esc(c.state):''} · ⭐ ${s.rating||'New'} · ${s.open}–${s.close}${d!=null?' · '+d.toFixed(1)+' km away':''}</div>
+  <div class="row2">
+    <a class="btn dark sm" href="${dirUrl(s)}" target="_blank" rel="noopener">🧭 Get directions</a>
+    <a class="btn ghost sm" href="tel:${digits(s.phone)}">📞 ${esc(s.phone)}</a>
+    ${wa?`<a class="btn ghost sm" href="https://wa.me/${wa}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}
+  </div>
+  <table><tr><th>Bike</th><th>Type</th><th>Per hour</th><th>Per day</th></tr>
+  ${s.bikes.map(b=>`<tr><td>${esc(b.model)}</td><td>${EMO[b.type]||''} ${esc(b.type)}</td><td>${b.hr?rupee(b.hr):'—'}</td><td><b>${rupee(b.day)}</b></td></tr>`).join('')}</table>
+  <div class="meta" style="margin-bottom:14px">Bring: original driving licence + ID proof. Fuel not included. Refundable deposit may apply.</div>
+  <button class="btn" onclick="openBook(${s.id})">Book a bike</button>
+  ${s.sample!==false&&isSample?'<div class="warn">This is a sample shop. Contact details are not real yet.</div>':''}`);}
+
+/* ---------------- SERVER (api.php) ---------------- */
+let API=false; // true once api.php answers; otherwise the site runs in preview mode with data.js
+const LS='glw_codes';
+function myCodes(){try{return JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){return[]}}
+function saveCode(c){try{const a=myCodes().filter(x=>x!==c);a.unshift(c);localStorage.setItem(LS,JSON.stringify(a.slice(0,20)))}catch(e){}}
+async function api(action,body){
+  const r=await fetch('api.php?action='+action,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{cache:'no-store'});
+  let j=null;try{j=await r.json()}catch(e){}
+  if(!j)throw new Error('The server did not answer. Please try again.');
+  if(!j.ok)throw new Error(j.error||'Something went wrong.');
+  return j;}
+const STATUS={new:['Waiting for shop','#7a5600','#fff4d6'],confirmed:['Confirmed','#1d6b45','#e8f7ef'],completed:['Completed','#1a56b8','#e8f0fe'],cancelled:['Cancelled','#8a1c12','#fdecea']};
+const stTag=s=>{const x=STATUS[s]||STATUS.new;return `<span style="background:${x[2]};color:${x[1]};padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600">${x[0]}</span>`;};
+
+function openBook(id){const s=SHOPS.find(x=>x.id===id);const today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);map.closePopup();
+  showM(`<h2>Book at ${esc(s.name)}</h2><div class="meta">${esc(s.area)}</div>
+  <form id="bf"><label>Bike</label><select name="bike">${s.bikes.map((b,i)=>`<option value="${i}">${esc(b.model)} – ${rupee(b.day)}/day</option>`).join('')}</select>
+  <div class="row"><div><label>Pickup date</label><input type="date" name="date" value="${today}" min="${today}" required></div>
+  <div><label>Number of days</label><input type="number" name="days" value="1" min="1" max="30" required></div></div>
+  <div class="row"><div><label>Your name</label><input name="name" required minlength="2" placeholder="Full name"></div>
+  <div><label>Phone</label><input name="phone" required pattern="[0-9 +]{10,14}" placeholder="10-digit mobile"></div></div>
+  <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+  <label><input type="checkbox" name="helmet" style="width:auto"> Extra helmet for pillion (+₹50/day)</label>
+  <div class="total"><span>Estimated total</span><b id="tot"></b></div>
+  <div class="meta" id="dep" style="margin:-6px 0 12px"></div>
+  <button class="btn" type="submit" id="bbtn">Confirm booking request</button></form><div id="bres"></div>`);
+  const f=$('#bf');const calc=()=>{const b=s.bikes[f.bike.value],d=Math.max(1,+f.days.value||1);$('#tot').textContent=rupee(b.day*d+(f.helmet.checked?50*d:0));
+    $('#dep').textContent=b.deposit?`Plus a refundable deposit of ${rupee(b.deposit)}, paid at the shop.`:'';};
+  f.oninput=calc;calc();
+  f.onsubmit=async e=>{e.preventDefault();const b=s.bikes[f.bike.value],d=Math.max(1,+f.days.value);
+    let bk;
+    if(API){
+      const btn=$('#bbtn');btn.disabled=true;btn.textContent='Sending…';
+      try{bk=(await api('book',{bike_id:b.id,name:f.name.value,phone:f.phone.value,date:f.date.value,days:d,helmet:f.helmet.checked,website:f.website.value})).booking;saveCode(bk.code);}
+      catch(err){btn.disabled=false;btn.textContent='Confirm booking request';toast(err.message);return;}
+    }else{
+      bk={code:'GL'+Math.floor(100000+Math.random()*900000),shop:s.name,bike:b.model,date:f.date.value,days:d,total:b.day*d+(f.helmet.checked?50*d:0),name:f.name.value,status:'new'};
+      bookings.unshift(bk);
+    }
+    updCount();f.style.display='none';
+    $('#bres').innerHTML=`<div class="ok"><b>Booking request sent ✓</b><br>Booking ID: <b>${esc(bk.code)}</b><br>${esc(bk.bike)} · ${esc(bk.date)} · ${bk.days} day(s) · ${rupee(bk.total)}</div>
+    ${API?'<div class="meta" style="margin-top:8px">The shop will confirm your booking soon. Check the status any time under “My bookings”. Bring your driving licence and an ID proof.</div>':'<div class="warn">Preview version: this booking is not saved.</div>'}
+    <div class="row2"><a class="btn dark sm" href="${dirUrl(s)}" target="_blank" rel="noopener">🧭 Directions to shop</a><button class="btn ghost sm" onclick="openBookings()">My bookings</button></div>`;};}
+
+function updCount(){const n=API?myCodes().length:bookings.length;$('#bkCount').textContent=n?`(${n})`:'';}
+async function openBookings(){
+  if(!API){showM(`<h2>My bookings</h2>${bookings.length?bookings.map(b=>`<div class="bk"><b>${esc(b.bike)}</b> at ${esc(b.shop)} ${stTag(b.status)}<br><span class="meta">${b.code} · ${b.date} · ${b.days} day(s) · ${rupee(b.total)}</span></div>`).join(''):'<p class="meta">No bookings yet. Pick a shop and tap Book.</p>'}`);return;}
+  const codes=myCodes();
+  if(!codes.length){showM('<h2>My bookings</h2><p class="meta">No bookings on this device yet. Pick a shop and tap Book.</p>');return;}
+  showM('<h2>My bookings</h2><p class="meta">Loading…</p>');
+  try{const list=(await api('status',{codes})).bookings;
+    showM(`<h2>My bookings</h2>${list.map(b=>`<div class="bk"><b>${esc(b.bike)}</b> at ${esc(b.shop)} ${stTag(b.status)}<br><span class="meta">${esc(b.code)} · ${esc(b.date)} · ${b.days} day(s) · ${rupee(b.total)}</span></div>`).join('')||'<p class="meta">No bookings found.</p>'}<p class="meta">To change or cancel a booking, call or WhatsApp the shop.</p>`);}
+  catch(err){showM(`<h2>My bookings</h2><div class="warn">${esc(err.message)}</div>`);}}
+function openRoutes(){const c=CITIES[st.city];showM(`<h2>Ride routes · ${esc(c.name)}</h2>${c.routes.map(r=>`<div class="bk"><b style="color:${r.color}">●</b> <b>${esc(r.name)}</b> · ${r.km} km<br><span class="meta">${esc(r.tip)}</span></div>`).join('')}<p class="meta">Routes are drawn as dashed lines on the map.</p>`);}
+
+function openRegister(){const ctr=map.getCenter();
+  const opts=Object.entries(CITIES).map(([k,c])=>`<option value="${k}" ${k===st.city?'selected':''}>${c.name}${c.state!==c.name?', '+c.state:''}</option>`).join('');
+  showM(`<h2>List your rental shop</h2><p class="meta">Free for shop owners. We check every shop before it appears on the map.</p>
+  <form id="rf"><label>Shop name</label><input name="name" required minlength="2">
+  <div class="row"><div><label>City</label><select name="city">${opts}</select></div><div><label>Area / street</label><input name="area" required minlength="2" placeholder="e.g. Nehru Street"></div></div>
+  <label>Shop location (latitude, longitude)</label><input name="loc" required value="${ctr.lat.toFixed(5)}, ${ctr.lng.toFixed(5)}">
+  <div class="hint">In Google Maps, right-click your shop and click the numbers at the top to copy them, then paste here.</div>
+  <div class="row"><div><label>Phone</label><input name="phone" required placeholder="+91 …"></div><div><label>WhatsApp (optional)</label><input name="wa" placeholder="+91 …"></div></div>
+  <div class="row"><div><label>Opens</label><input type="time" name="open" value="08:00" required></div><div><label>Closes</label><input type="time" name="close" value="20:00" required></div></div>
+  <div class="row"><div><label>Bike type</label><select name="type">${TYPES.map(t=>`<option>${t.k}</option>`).join('')}</select></div><div><label>Bike model</label><input name="model" required placeholder="e.g. Honda Activa"></div></div>
+  <div class="row"><div><label>Price per day (₹)</label><input type="number" name="day" min="50" required></div><div><label>Price per hour (₹)</label><input type="number" name="hr" min="0" value="0"></div></div>
+  <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+  <div class="hint">You can add more bikes after we call you.</div>
+  <br><button class="btn" type="submit" id="rbtn">Send my shop</button></form>
+  ${API?'':'<div class="warn">Preview version: your shop shows on the map now but is not saved.</div>'}`);
+  $('#rf').onsubmit=async e=>{e.preventDefault();const f=e.target;const m=f.loc.value.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    if(!m){toast('Please enter location as: 11.93452, 79.82851');return;}
+    if(API){
+      const btn=$('#rbtn');btn.disabled=true;btn.textContent='Sending…';
+      try{await api('register',{city:f.city.value,name:f.name.value,area:f.area.value,lat:+m[1],lng:+m[2],phone:f.phone.value,whatsapp:f.wa.value,open:f.open.value,close:f.close.value,type:f.type.value,model:f.model.value,day:+f.day.value,hr:+f.hr.value,website:f.website.value});
+        showM('<h2>Thank you! 🎉</h2><div class="ok">We have received your shop details.</div><p class="meta">We will call you to check the details. Your shop will appear on the map once it is approved.</p>');}
+      catch(err){btn.disabled=false;btn.textContent='Send my shop';toast(err.message);}
+      return;}
+    const s={id:Math.max(...SHOPS.map(x=>x.id))+1,city:f.city.value,name:f.name.value,area:f.area.value,lat:+m[1],lng:+m[2],phone:f.phone.value,whatsapp:f.wa.value,rating:0,open:f.open.value,close:f.close.value,bikes:[B(f.type.value,f.model.value,+f.day.value,+f.hr.value)]};
+    SHOPS.push(s);if(st.city!==s.city){st.city=s.city;$('#city').value=s.city;onCity(false);}
+    closeM();render();focusShop(s.id);toast('Your shop is on the map!');};}
+
+/* ---------------- INIT ---------------- */
+function renderChips(){$('#types').innerHTML=TYPES.map(t=>`<button class="chip ${st.types.has(t.k)?'on':''}" data-t="${t.k}">${t.e} ${t.k}</button>`).join('');
+  $('#types').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const t=b.dataset.t;st.types.has(t)?st.types.delete(t):st.types.add(t);renderChips();render();});}
+function onCity(move=true){const c=CITIES[st.city];st.sel=null;
+  $('#heroTitle').textContent=`Rent a bike in ${c.name}`;$('#heroSub').textContent=`Compare local rental shops, prices and bikes in ${c.name}${c.state!==c.name?', '+c.state:''}, on one live map.`;
+  renderTips();render();
+  if(move){const pts=SHOPS.filter(s=>s.city===st.city).map(s=>[s.lat,s.lng]);pts.length?map.fitBounds(pts,{padding:[50,50],maxZoom:15}):map.setView(c.center,c.zoom);}}
+$('#city').innerHTML=Object.entries(CITIES).map(([k,c])=>`<option value="${k}">${c.name}${c.state!==c.name?', '+c.state:''}</option>`).join('');
+$('#city').onchange=e=>{st.city=e.target.value;onCity();};
+$('#q').oninput=e=>{st.q=e.target.value;render();};
+$('#maxp').oninput=e=>{st.maxp=+e.target.value;$('#maxpv').textContent=e.target.value;render();};
+$('#sort').onchange=e=>{st.sort=e.target.value;if(st.sort==='dist'&&!st.me){nearMe();}renderList();};
+['#tRoutes','#tFuel','#tOpen'].forEach(id=>$(id).onchange=render);
+renderChips();
+(async()=>{
+  try{const j=await api('shops');SHOPS.splice(0,SHOPS.length,...j.shops);isSample=j.sample;API=true;}
+  catch(e){/* no server (preview): keep the shops from data.js */}
+  $('#demoBar').style.display=isSample?'':'none';
+  updCount();onCity();
+})();
+</script>
+</body>
+</html>
