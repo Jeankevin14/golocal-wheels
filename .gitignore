@@ -1,0 +1,23 @@
+# Secrets – never commit
+.env
+.env.*
+!.env.example
+src/app/.env
+config.php.local
+
+# Runtime folders created on the server / locally
+src/app/backups/
+src/app/sessions/
+src/app/migrations/
+.ftp-deploy-sync-state.json
+
+# Editors & OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Local tools
+node_modules/
+vendor/
+/tmp/
