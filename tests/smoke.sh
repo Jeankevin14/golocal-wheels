@@ -29,6 +29,7 @@ check "Past pickup date is refused"     "echo '$bad_date' | grep -q '\"ok\":fals
 
 admin_page=$(curl -fsS "$BASE_URL/admin.php")
 check "Admin login page loads"          "grep -q 'Admin login' <<< \"\$admin_page\""
+check "Deploy hook needs a token"       "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE_URL/deploy-hook.php')\" = 403 ]"
 check "Migrate endpoint needs a token"  "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE_URL/migrate.php')\" = 403 ]"
 home_page=$(curl -fsS "$BASE_URL/index.html")
 check "Home page loads"                 "grep -q 'GoLocal' <<< \"\$home_page\""
