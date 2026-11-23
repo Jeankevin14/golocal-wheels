@@ -303,7 +303,7 @@ page_head('Admin');
     <p class="muted" style="margin:6px 0 10px"><?php if ($s['phone']): ?>Call: <a href="tel:<?= h(digits($s['phone'])) ?>"><b><?= h($s['phone']) ?></b></a><?php else: ?>No phone number yet – find it on Google Maps and add it below.<?php endif; ?>
       <?= $s['verified_at'] ? ' · Approved after call on ' . h(date('d M Y', strtotime($s['verified_at']))) : '' ?></p>
     <form method="post" class="form"><input type="hidden" name="csrf" value="<?= h($CSRF) ?>"><input type="hidden" name="act" value="comment"><input type="hidden" name="id" value="<?= $id ?>">
-      <textarea name="note" rows="3" required placeholder="What did they say? e.g. “Approved by calling – spoke to owner Ravi, 12 scooters, ₹350/day, OK to list.” or “No answer, call again tomorrow.”"><?= h($draft) ?></textarea>
+      <textarea name="note" rows="3" required><?= h($draft) ?></textarea>
       <?php if ($s['status'] !== 'approved'): ?>
       <label class="approve"><input type="checkbox" name="approve" value="1"> ✅ <b>I called this shop and they agreed to be listed.</b> Approve it and show it on the website.</label>
       <?php if (!$nb): ?><div class="muted">⚠️ To approve, first add at least one bike with its price below and click <b>Save shop</b>.</div><?php endif; ?>
