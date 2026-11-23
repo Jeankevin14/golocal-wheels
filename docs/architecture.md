@@ -5,7 +5,7 @@ Browser ──▶ public_html (src/public)          ──▶ app/ (src/app, pri
             index.html  (map, booking UI)         config/config.php (.env)        shops, bikes, bookings,
             api.php     (JSON API)                lib/db.php, migrator, backup    admins, shop_comments,
             admin.php   (admin panel)             scripts/backup.php (cron)       schema_migrations
-            migrate.php (deploy hook, token)
+            deploy-hook.php (auto-update, token)
             setup.php   (first admin only)
 ```
 

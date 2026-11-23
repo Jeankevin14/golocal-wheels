@@ -21,7 +21,7 @@ Big rental apps leave out the small local shops that most tourists actually rent
 | Server code | PHP 8 (no framework) |
 | Database | MariaDB 10.4 |
 | Hosting | DirectAdmin shared hosting (LiteSpeed), Let’s Encrypt SSL |
-| Deploy | GitHub Actions → FTPS, migrations run automatically |
+| Deploy | GitHub Actions → `deploy-hook.php` (server pulls the commit from GitHub), migrations run automatically |
 
 ## Folder structure
 ```
