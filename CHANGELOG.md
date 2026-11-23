@@ -2,6 +2,9 @@
 All notable changes to GoLocal Wheels. Format: [Keep a Changelog](https://keepachangelog.com), versions: [SemVer](https://semver.org).
 
 ## [Unreleased]
+### Fixed
+- Admin call notes box no longer shows long example text.
+
 ### Added
 - Project moved to GitHub with the team project standard: folder layout, docs, VS Code settings, docker-compose for local development.
 - Database migrations (`database/migrations`) run automatically on deploy, with a backup before each change.
