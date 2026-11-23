@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "bmewburn.vscode-intelephense-client",
+    "editorconfig.editorconfig",
+    "ms-azuretools.vscode-docker",
+    "humao.rest-client",
+    "cweijan.vscode-mysql-client2",
+    "github.vscode-github-actions"
+  ]
+}

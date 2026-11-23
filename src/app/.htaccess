@@ -1,0 +1,2 @@
+# The app folder is outside the website, but block it anyway in case it is ever placed inside.
+Require all denied
