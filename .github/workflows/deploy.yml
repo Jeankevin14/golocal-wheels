@@ -1,0 +1,88 @@
+# Deploy by Git:
+#   merge to develop -> staging    (staging.golocalwheels.com)
+#   merge to main    -> production (golocalwheels.com)
+# Each GitHub environment ("staging", "production") holds its own secrets – see docs/deployment.md.
+name: Deploy
+
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Switched off until the server setup in docs/deployment.md is done.
+    # Turn on: repo → Settings → Secrets and variables → Actions → Variables → DEPLOY_ENABLED = true
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - name: Lint PHP before uploading
+        run: bash scripts/lint.sh
+
+      - name: Prepare files for upload
+        env:
+          APP_PATH_FROM_PUBLIC: ${{ vars.APP_PATH_FROM_PUBLIC }}
+        run: |
+          # migrations travel with the private app folder
+          mkdir -p src/app/migrations
+          cp database/migrations/*.sql src/app/migrations/
+          # where the app folder is, seen from the web root (default: ../app)
+          if [ -n "$APP_PATH_FROM_PUBLIC" ]; then
+            printf "<?php\nreturn __DIR__ . '/%s';\n" "$APP_PATH_FROM_PUBLIC" > src/public/_app_path.php
+          fi
+
+      - name: Upload private app folder (outside the web root)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          security: loose
+          local-dir: ./src/app/
+          server-dir: ${{ secrets.FTP_APP_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .env
+            backups/**
+            sessions/**
+
+      - name: Upload website files (web root)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          security: loose
+          local-dir: ./src/public/
+          server-dir: ${{ secrets.FTP_PUBLIC_DIR }}
+
+      - name: Back up the database and run migrations
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          MIGRATE_TOKEN: ${{ secrets.MIGRATE_TOKEN }}
+        run: |
+          curl -fsS --retry 3 -X POST -H "X-Migrate-Token: $MIGRATE_TOKEN" "$SITE_URL/migrate.php"
+
+      - name: Smoke test the deployed site (read-only)
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          shops=$(curl -fsS "$SITE_URL/api.php?action=shops")
+          grep -q '"ok":true' <<< "$shops"
+          admin=$(curl -fsS "$SITE_URL/admin.php")
+          grep -q 'Admin login' <<< "$admin"
+          echo "Deployed site answers correctly."
