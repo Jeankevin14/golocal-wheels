@@ -57,6 +57,9 @@ Create an FTP user, e.g. `deploy`, with **custom path** `/home/golocalwheels/dom
    (copy the database password from the old `public_html/config.php`).
 2. After the **first successful production deploy**, delete these old files from `public_html`: `config.php`, `db.php`, `shops-research.json`, `install.php`, `check.php` (if present), and the old `glw_sessions` folder next to it.
 
+### Shop research list (not in Git)
+The admin “Add shop list” button reads `app/data/shops-research.json`. That file holds business phone numbers of shops that have not agreed to be listed yet, so it is **not stored in this public repository**. Keep your private copy and upload it by hand to `app/data/` on the server if you need the import again.
+
 ### 4. GitHub environments and secrets (repo → Settings → Environments)
 Create two environments, **staging** and **production**. Add to each:
 

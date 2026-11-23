@@ -21,3 +21,6 @@ Thumbs.db
 node_modules/
 vendor/
 /tmp/
+
+# Shop research list (business phone numbers) – kept on the server only, not in the public repo
+src/app/data/*.json
