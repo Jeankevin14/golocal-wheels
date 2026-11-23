@@ -5,9 +5,6 @@ All notable changes to GoLocal Wheels. Format: [Keep a Changelog](https://keepac
 ### Changed
 - Deploys are now pull-based: GitHub signals `deploy-hook.php` with a secret token and the server downloads and installs the exact commit itself (backup + migrations included). No FTP account or hosting password is stored on GitHub.
 
-### Fixed
-- Admin call notes box no longer shows long example text.
-
 ### Added
 - Project moved to GitHub with the team project standard: folder layout, docs, VS Code settings, docker-compose for local development.
 - Database migrations (`database/migrations`) run automatically on deploy, with a backup before each change.
