@@ -1,7 +1,9 @@
-# Deploy by Git:
-#   merge to develop -> staging    (staging.golocalwheels.com)
-#   merge to main    -> production (golocalwheels.com)
-# Each GitHub environment ("staging", "production") holds its own secrets – see docs/deployment.md.
+# Deploy by Git (pull-based – no FTP password needed):
+#   merge to develop -> staging    (when the repo variable STAGING_DEPLOY_ENABLED = true)
+#   merge to main    -> production (when the repo variable PRODUCTION_DEPLOY_ENABLED = true)
+# GitHub only sends the server a signal with a secret token; the server itself downloads
+# this exact commit from GitHub, installs it, backs up the database and runs migrations.
+# See docs/deployment.md.
 name: Deploy
 
 on:
@@ -15,69 +17,26 @@ concurrency:
 
 jobs:
   deploy:
-    # Switched off until the server setup in docs/deployment.md is done.
-    # Turn on: repo → Settings → Secrets and variables → Actions → Variables → DEPLOY_ENABLED = true
-    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    if: >-
+      (github.ref_name == 'main'    && vars.PRODUCTION_DEPLOY_ENABLED == 'true') ||
+      (github.ref_name == 'develop' && vars.STAGING_DEPLOY_ENABLED == 'true')
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-
-      - name: Lint PHP before uploading
-        run: bash scripts/lint.sh
-
-      - name: Prepare files for upload
-        env:
-          APP_PATH_FROM_PUBLIC: ${{ vars.APP_PATH_FROM_PUBLIC }}
-        run: |
-          # migrations travel with the private app folder
-          mkdir -p src/app/migrations
-          cp database/migrations/*.sql src/app/migrations/
-          # where the app folder is, seen from the web root (default: ../app)
-          if [ -n "$APP_PATH_FROM_PUBLIC" ]; then
-            printf "<?php\nreturn __DIR__ . '/%s';\n" "$APP_PATH_FROM_PUBLIC" > src/public/_app_path.php
-          fi
-
-      - name: Upload private app folder (outside the web root)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
-          security: loose
-          local-dir: ./src/app/
-          server-dir: ${{ secrets.FTP_APP_DIR }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .env
-            backups/**
-            sessions/**
-
-      - name: Upload website files (web root)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
-          security: loose
-          local-dir: ./src/public/
-          server-dir: ${{ secrets.FTP_PUBLIC_DIR }}
-
-      - name: Back up the database and run migrations
+      - name: Ask the server to install this commit
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-          MIGRATE_TOKEN: ${{ secrets.MIGRATE_TOKEN }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          curl -fsS --retry 3 -X POST -H "X-Migrate-Token: $MIGRATE_TOKEN" "$SITE_URL/migrate.php"
+          body=$(printf '{"sha":"%s","branch":"%s"}' "${{ github.sha }}" "${{ github.ref_name }}")
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 300 -X POST \
+            -H "X-Deploy-Token: $DEPLOY_TOKEN" -H 'Content-Type: application/json' \
+            -d "$body" "$SITE_URL/deploy-hook.php")
+          cat response.json; echo
+          if [ "$code" = "409" ]; then echo "A newer commit is already on the branch – its own deploy will install it."; exit 0; fi
+          [ "$code" = "200" ]
 
-      - name: Smoke test the deployed site (read-only)
+      - name: Check the live site answers
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |

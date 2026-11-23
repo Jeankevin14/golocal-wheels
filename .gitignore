@@ -9,6 +9,8 @@ config.php.local
 src/app/backups/
 src/app/sessions/
 src/app/migrations/
+src/app/tmp/
+src/app/deployed.json
 .ftp-deploy-sync-state.json
 
 # Editors & OS
