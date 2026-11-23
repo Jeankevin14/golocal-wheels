@@ -2,10 +2,13 @@
 All notable changes to GoLocal Wheels. Format: [Keep a Changelog](https://keepachangelog.com), versions: [SemVer](https://semver.org).
 
 ## [Unreleased]
+
+## [1.1.0] – 2026-11-24
 ### Changed
 - Deploys are now pull-based: GitHub signals `deploy-hook.php` with a secret token and the server downloads and installs the exact commit itself (backup + migrations included). No FTP account or hosting password is stored on GitHub.
 
 ### Added
+- README badges and a screenshot of the website.
 - Project moved to GitHub with the team project standard: folder layout, docs, VS Code settings, docker-compose for local development.
 - Database migrations (`database/migrations`) run automatically on deploy, with a backup before each change.
 - Daily database backup script (keeps 14 days).
