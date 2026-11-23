@@ -1,8 +1,15 @@
 # GoLocal Wheels 🛵
 
+[![CI](https://github.com/Jeankevin14/golocal-wheels/actions/workflows/ci.yml/badge.svg)](https://github.com/Jeankevin14/golocal-wheels/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Jeankevin14/golocal-wheels/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jeankevin14/golocal-wheels/actions/workflows/deploy.yml)
+[![Live site](https://img.shields.io/badge/live-golocalwheels.com-e8a21e)](https://golocalwheels.com)
+
 **Find, compare and book bikes from local rental shops – Pondicherry first, then Chennai, Bengaluru and Goa.**
 
-Live site: https://golocalwheels.com · Admin: https://golocalwheels.com/admin.php
+🌐 **Live:** https://golocalwheels.com
+
+![GoLocal Wheels – live map of local bike rental shops](docs/images/website.jpg)
+<sub>Screenshot with sample shops.</sub>
 
 Big rental apps leave out the small local shops that most tourists actually rent from. GoLocal Wheels puts those shops on one live map with clear prices, and a shop appears on the site only after the team has called it and confirmed it.
 
