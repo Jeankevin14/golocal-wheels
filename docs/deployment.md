@@ -24,6 +24,10 @@ The deploy workflow (`.github/workflows/deploy.yml`):
 └── app-staging/            ← staging private folder    (src/app) + .env + backups/
 ```
 
+## Turning deploys on
+Deploys are **off** until the one-time setup below is done, so merges do not fail. When everything is ready:
+repo → **Settings → Secrets and variables → Actions → Variables** → add `DEPLOY_ENABLED` = `true`.
+
 ## One-time setup
 
 ### 1. FTP account for deploys (DirectAdmin → FTP Management)

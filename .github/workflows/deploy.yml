@@ -15,6 +15,9 @@ concurrency:
 
 jobs:
   deploy:
+    # Switched off until the server setup in docs/deployment.md is done.
+    # Turn on: repo → Settings → Secrets and variables → Actions → Variables → DEPLOY_ENABLED = true
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
