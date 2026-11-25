@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoLocal Wheels – Coming Soon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0a0f;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    padding: 2rem 1rem 150px;
+  }
+
+  /* Stars */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star {
+    position: absolute; width: 2px; height: 2px;
+    background: #fff; border-radius: 50%; opacity: 0;
+    animation: twinkle var(--d) ease-in-out infinite;
+    animation-delay: var(--delay);
+  }
+  @keyframes twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 0.6; } }
+
+  /* Road */
+  .road {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 110px;
+    background: #1a1a2e; border-top: 3px solid #2a2a4e;
+    overflow: hidden; z-index: 1;
+  }
+  .road-line {
+    position: absolute; top: 50%; right: -80px;
+    height: 6px; width: 80px; background: #f0a500; border-radius: 3px;
+    animation: roadMove 1.2s linear infinite;
+  }
+  .road-line:nth-child(2) { animation-delay: -0.3s; }
+  .road-line:nth-child(3) { animation-delay: -0.6s; }
+  .road-line:nth-child(4) { animation-delay: -0.9s; }
+  /* lines move right-to-left, so the bike looks like it is riding forward */
+  @keyframes roadMove {
+    from { transform: translate(0, -50%); }
+    to   { transform: translate(calc(-100vw - 160px), -50%); }
+  }
+
+  /* Bike */
+  .bike-wrapper {
+    position: fixed; bottom: 60px; left: 50%; z-index: 2;
+    transform: translateX(-50%);
+    animation: bikeFloat 2s ease-in-out infinite;
+  }
+  .bike-emoji {
+    font-size: 4rem; display: inline-block; line-height: 1;
+    animation: bikeShake 0.15s linear infinite;
+    /* most phones draw this emoji facing left; flip it so it rides forward */
+    filter: drop-shadow(0 0 14px #f0a50088);
+  }
+  @keyframes bikeShake {
+    0%, 100% { transform: scaleX(-1) translateY(0) rotate(-1deg); }
+    50%      { transform: scaleX(-1) translateY(-2px) rotate(1deg); }
+  }
+  @keyframes bikeFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-6px); }
+  }
+
+  /* Content */
+  .content { position: relative; z-index: 3; text-align: center; width: 100%; max-width: 440px; }
+
+  .speedo { display: block; width: 220px; max-width: 70vw; height: auto; margin: 0 auto 1rem; }
+
+  .logo { font-size: 2.4rem; font-weight: 800; color: #f0a500; letter-spacing: -1px; margin-bottom: 0.4rem; }
+  .logo span { color: #fff; }
+  .tagline { font-size: 0.9rem; color: #888; margin-bottom: 1.6rem; letter-spacing: 2px; text-transform: uppercase; }
+  .coming-soon { font-size: 1.1rem; color: #aaa; margin-bottom: 1.6rem; }
+
+  /* Ride tips */
+  .fact-box {
+    background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 16px;
+    padding: 1.4rem 1.6rem; margin: 0 auto;
+    transition: opacity 0.3s ease;
+  }
+  .fact-title { font-size: 0.7rem; color: #666; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .fact-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .fact-text { font-size: 0.95rem; color: #ccc; line-height: 1.6; margin-bottom: 1rem; min-height: 3.2em; }
+  .fact-btn {
+    background: none; border: 1px solid #f0a500; color: #f0a500;
+    padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; font-size: 0.8rem;
+    transition: background 0.2s;
+  }
+  .fact-btn:hover { background: #f0a50022; }
+
+  @media (max-width: 480px) {
+    .logo { font-size: 2rem; }
+    .bike-emoji { font-size: 3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="road" aria-hidden="true">
+  <div class="road-line"></div>
+  <div class="road-line"></div>
+  <div class="road-line"></div>
+  <div class="road-line"></div>
+</div>
+
+<div class="bike-wrapper" aria-hidden="true">
+  <div class="bike-emoji">🏍️</div>
+</div>
+
+<main class="content">
+  <!-- Speedometer: half-circle gauge, readout below the hub so the needle never covers it -->
+  <svg class="speedo" viewBox="0 0 200 140" aria-hidden="true">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="100%" r="70%">
+        <stop offset="0%" stop-color="#f0a500" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#f0a500" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <path d="M 6 104 A 94 94 0 0 1 194 104 Z" fill="#111" stroke="#222" stroke-width="2"/>
+    <path d="M 6 104 A 94 94 0 0 1 194 104 Z" fill="url(#glow)"/>
+    <path d="M 20 104 A 80 80 0 0 1 180 104" fill="none" stroke="#222" stroke-width="10" stroke-linecap="round"/>
+    <path id="speedArc" d="M 20 104 A 80 80 0 0 1 180 104" fill="none" stroke="#f0a500" stroke-width="10"
+          stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+    <g id="ticks"></g>
+    <line id="needle" x1="100" y1="104" x2="100" y2="42" stroke="#ff4444" stroke-width="3"
+          stroke-linecap="round" transform="rotate(-90 100 104)"/>
+    <circle cx="100" cy="104" r="7" fill="#f0a500"/>
+    <text x="100" y="128" text-anchor="middle" fill="#fff" font-size="14" font-weight="700"
+          font-family="monospace" id="speedNum">0</text>
+    <text x="100" y="139" text-anchor="middle" fill="#666" font-size="8">km/h</text>
+  </svg>
+
+  <div class="logo">GoLocal<span>Wheels</span></div>
+  <div class="tagline">Pondicherry &amp; Beyond</div>
+  <div class="coming-soon">We're getting ready to ride. Launching soon 🏍️</div>
+
+  <div class="fact-box" id="factBox">
+    <div class="fact-title">Ride tip</div>
+    <div class="fact-icon" id="factIcon"></div>
+    <div class="fact-text" id="factText"></div>
+    <button class="fact-btn" type="button" onclick="nextFact()">Next tip →</button>
+  </div>
+</main>
+
+<script>
+  // Stars
+  const starContainer = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top  = Math.random() * 75 + '%';
+    s.style.setProperty('--d', (2 + Math.random() * 4) + 's');
+    s.style.setProperty('--delay', (Math.random() * 4) + 's');
+    starContainer.appendChild(s);
+  }
+
+  // Speedometer
+  (function () {
+    const NS = 'http://www.w3.org/2000/svg';
+    const CX = 100, CY = 104, MAX = 180, ARC = 251.3;
+    const g = document.getElementById('ticks');
+    for (let i = 0; i <= 9; i++) {              // a tick every 20 km/h
+      const rad = (-180 + i * 20) * Math.PI / 180;
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', CX + 70 * Math.cos(rad));
+      line.setAttribute('y1', CY + 70 * Math.sin(rad));
+      line.setAttribute('x2', CX + 62 * Math.cos(rad));
+      line.setAttribute('y2', CY + 62 * Math.sin(rad));
+      line.setAttribute('stroke', i >= 8 ? '#ff4444' : '#555');
+      line.setAttribute('stroke-width', '2');
+      g.appendChild(line);
+    }
+    const needle = document.getElementById('needle');
+    const arc    = document.getElementById('speedArc');
+    const num    = document.getElementById('speedNum');
+    let speed = 0, dir = 1;
+    function draw() {
+      needle.setAttribute('transform', `rotate(${-90 + (speed / MAX) * 180} ${CX} ${CY})`);
+      arc.setAttribute('stroke-dashoffset', ARC - (speed / MAX) * ARC);
+      num.textContent = Math.round(speed);
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { speed = 60; draw(); return; }
+    setInterval(() => {
+      speed += dir * (2 + Math.random() * 3);
+      if (speed >= 150) { speed = 150; dir = -1; }
+      if (speed <= 0)   { speed = 0;   dir = 1; }
+      draw();
+    }, 60);
+  })();
+
+  // Ride tips
+  const facts = [
+    { icon: '🛡️', text: 'Helmets are compulsory for riders in India. Always wear one, even for a short ride.' },
+    { icon: '🪪', text: 'Carry your driving licence whenever you ride a rented bike. It is required by law.' },
+    { icon: '🏛️', text: "Pondicherry's French Quarter, with its colonial streets, is easy to explore on two wheels." },
+    { icon: '🌊', text: 'The East Coast Road (ECR) between Chennai and Pondicherry is one of South India’s favourite coastal rides.' },
+    { icon: '🌳', text: 'Auroville is a short, easy ride north of Pondicherry town.' },
+    { icon: '🏖️', text: 'Paradise Beach at Chunnambar is a quick ride south of the town centre.' },
+    { icon: '⛽', text: 'Check the fuel level when you pick up your bike, and fill up before a long ride on the ECR.' },
+  ];
+  let factIndex = 0;
+  function showFact(i) {
+    document.getElementById('factText').textContent = facts[i].text;
+    document.getElementById('factIcon').textContent = facts[i].icon;
+  }
+  let timer;
+  function nextFact() {
+    factIndex = (factIndex + 1) % facts.length;
+    const box = document.getElementById('factBox');
+    box.style.opacity = 0;
+    setTimeout(() => { showFact(factIndex); box.style.opacity = 1; }, 300);
+    clearInterval(timer);
+    timer = setInterval(nextFact, 6000);
+  }
+  showFact(0);
+  timer = setInterval(nextFact, 6000);
+</script>
+</body>
+</html>

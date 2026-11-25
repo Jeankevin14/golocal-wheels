@@ -2,6 +2,8 @@
 All notable changes to GoLocal Wheels. Format: [Keep a Changelog](https://keepachangelog.com), versions: [SemVer](https://semver.org).
 
 ## [Unreleased]
+### Added
+- "Coming soon" homepage with a speedometer, a riding bike and ride tips. The full site stays at `/index.html` until launch.
 
 ## [1.1.0] – 2026-11-24
 ### Changed

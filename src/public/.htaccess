@@ -1,6 +1,11 @@
 # GoLocal Wheels – web root rules
 Options -Indexes
 
+# Homepage shows the "coming soon" page until launch.
+# The full site stays reachable at /index.html for testing.
+# To launch: delete the next line.
+DirectoryIndex coming-soon.html index.html
+
 # Always use https (not for local development)
 <IfModule mod_rewrite.c>
   RewriteEngine On
