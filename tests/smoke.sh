@@ -33,6 +33,8 @@ check "Deploy hook needs a token"       "[ \"\$(curl -s -o /dev/null -w '%{http_
 check "Migrate endpoint needs a token"  "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -X POST '$BASE_URL/migrate.php')\" = 403 ]"
 home_page=$(curl -fsS "$BASE_URL/index.html")
 check "Home page loads"                 "grep -q 'GoLocal' <<< \"\$home_page\""
+soon_page=$(curl -fsS "$BASE_URL/coming-soon.html")
+check "Coming soon page loads"          "grep -q 'Launching soon' <<< \"\$soon_page\""
 
 echo "Passed: $pass   Failed: $fail"
 [ "$fail" -eq 0 ]
